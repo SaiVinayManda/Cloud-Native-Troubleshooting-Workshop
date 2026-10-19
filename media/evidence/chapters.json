@@ -1,0 +1,58 @@
+[
+  {
+    "title": "01 / Establish a healthy baseline",
+    "caption": "Two healthy containers and a real customer request returning HTTP 200.",
+    "start": 0.156,
+    "end": 7.439,
+    "videoStart": 0,
+    "videoEnd": 7.051
+  },
+  {
+    "title": "02 / Introduce the bad port",
+    "caption": "The override changes CATALOG_URL to catalog:9090. The HTML page still loads; the customer request fails.",
+    "start": 7.439,
+    "end": 16.148,
+    "videoStart": 7.051,
+    "videoEnd": 15.769
+  },
+  {
+    "title": "03 / Diagnose from evidence",
+    "caption": "ECONNREFUSED points to catalog:9090. The same container can reach catalog:8081: the configured port is wrong.",
+    "start": 16.148,
+    "end": 36.01,
+    "videoStart": 15.769,
+    "videoEnd": 35.681
+  },
+  {
+    "title": "04 / Repair and verify Docker",
+    "caption": "Recreate with the known-good configuration. Check readiness, three customer requests, and their fresh logs.",
+    "start": 36.01,
+    "end": 57.476,
+    "videoStart": 35.681,
+    "videoEnd": 57.097
+  },
+  {
+    "title": "05 / Establish the Kubernetes baseline",
+    "caption": "The image is loaded into kind. Both Pods are ready; a request through the storefront Service succeeds.",
+    "start": 57.476,
+    "end": 64.698,
+    "videoStart": 57.097,
+    "videoEnd": 64.335
+  },
+  {
+    "title": "06 / Diagnose the unready Pod",
+    "caption": "The bad ConfigMap takes effect after replacement. Running with 0/1 ready and zero restarts is a readiness failure.",
+    "start": 64.698,
+    "end": 100.922,
+    "videoStart": 64.335,
+    "videoEnd": 100.526
+  },
+  {
+    "title": "07 / Repair and verify Kubernetes",
+    "caption": "Restore the ConfigMap and replace the Pod. Readiness, Service traffic, and fresh request logs now agree.",
+    "start": 100.922,
+    "end": 124.694,
+    "videoStart": 100.526,
+    "videoEnd": 129.56
+  }
+]

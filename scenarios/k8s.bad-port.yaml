@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: storefront-config
+  namespace: troubleshooting-lab
+data:
+  CATALOG_URL: http://catalog:9090

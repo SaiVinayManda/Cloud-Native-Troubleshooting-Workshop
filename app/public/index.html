@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Field Supply | Troubleshooting Lab</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/client.js"></script>
+</head>
+<body>
+  <header><a class="brand" href="/">FIELD<span> / </span>SUPPLY</a><span class="tag">CLOUD NATIVE LAB · 01</span></header>
+  <main>
+    <div class="eyebrow">OBSERVE → DIAGNOSE → VERIFY</div>
+    <h1>A running process.<br>But is it <em>working?</em></h1>
+    <p class="intro">This storefront depends on a catalog service. Send a real request, inspect the result, and follow the evidence.</p>
+    <div class="workspace">
+      <section class="panel catalog" aria-labelledby="catalog-title">
+        <div class="panel-heading"><h2 id="catalog-title">The collection</h2><span id="status" class="pill" role="status">CHECKING</span></div>
+        <div id="products" class="products" aria-live="polite"></div>
+        <div class="request-bar"><button id="request">Send request <span aria-hidden="true">↗</span></button><span>GET /api/catalog</span></div>
+      </section>
+      <section class="panel response" aria-labelledby="response-title">
+        <div class="panel-heading"><h2 id="response-title">Response inspector</h2><span id="http" class="http">HTTP —</span></div>
+        <p class="small">Live response from the application</p>
+        <pre id="payload" aria-live="polite">Waiting for request…</pre>
+        <div class="trace"><span>REQUEST ID</span><code id="request-id">—</code></div>
+      </section>
+    </div>
+    <div class="steps">
+      <div><span>01 / RUN</span><p>Establish a healthy baseline.</p></div>
+      <div><span>02 / INSPECT</span><p>Match the request ID to the logs.</p></div>
+      <div><span>03 / REPAIR</span><p>Correct configuration. Test again.</p></div>
+    </div>
+  </main>
+  <footer><span>FIELD NOTES / TROUBLESHOOTING WORKSHOP</span><span>HTTP evidence beats assumptions.</span></footer>
+</body>
+</html>

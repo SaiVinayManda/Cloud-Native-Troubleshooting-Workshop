@@ -1,0 +1,12 @@
+.git
+node_modules
+.cache
+.tools
+artifacts
+test-results
+docs
+scripts
+tests
+media
+*.md
+

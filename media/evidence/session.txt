@@ -1,0 +1,690 @@
+2026-10-18T22:34:55.325Z
+$ docker build -t troubleshooting-storefront:1.0 .
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 298B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:22-alpine
+#2 DONE 1.4s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 126B done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 283B done
+#4 DONE 0.0s
+
+#5 [1/3] FROM docker.io/library/node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402
+#5 resolve docker.io/library/node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 0.1s done
+#5 DONE 0.1s
+
+#6 [2/3] WORKDIR /app
+#6 CACHED
+
+#7 [3/3] COPY --chown=node:node app/ ./app/
+#7 CACHED
+
+#8 exporting to image
+#8 exporting layers done
+#8 exporting manifest sha256:9956b74552e20170120c2a862ff55a05b9b96364df50f596447d89b025dc5982 done
+#8 exporting config sha256:baebe0547b3e533ef581d5a74d3f6f2829e981c581df6be5e3349dc6ba8fb9ce done
+#8 exporting attestation manifest sha256:8e62acc14feece512c754c24975f55961167e219336c6282bcebe34feef53b3e 0.1s done
+#8 exporting manifest list sha256:6caad80a8fd095bd45ce9a653a67fe534f57dad5ab185aed43fa70ffe6752eaa
+#8 exporting manifest list sha256:6caad80a8fd095bd45ce9a653a67fe534f57dad5ab185aed43fa70ffe6752eaa 0.0s done
+#8 naming to docker.io/library/troubleshooting-storefront:1.0 done
+#8 unpacking to docker.io/library/troubleshooting-storefront:1.0 0.0s done
+#8 DONE 0.2s
+[exit 0]
+
+2026-10-18T22:34:57.779Z
+$ docker compose -f compose.yaml up -d --wait --wait-timeout 90
+Container troubleshooting-lab-storefront-1  Stopping
+ Container troubleshooting-lab-storefront-1  Stopped
+ Container troubleshooting-lab-catalog-1  Recreate
+ Container troubleshooting-lab-catalog-1  Recreated
+ Container troubleshooting-lab-storefront-1  Recreate
+ Container troubleshooting-lab-storefront-1  Recreated
+ Container troubleshooting-lab-catalog-1  Starting
+ Container troubleshooting-lab-catalog-1  Started
+ Container troubleshooting-lab-catalog-1  Waiting
+ Container troubleshooting-lab-catalog-1  Healthy
+ Container troubleshooting-lab-storefront-1  Starting
+ Container troubleshooting-lab-storefront-1  Started
+ Container troubleshooting-lab-storefront-1  Waiting
+ Container troubleshooting-lab-catalog-1  Waiting
+ Container troubleshooting-lab-catalog-1  Healthy
+ Container troubleshooting-lab-storefront-1  Healthy
+[exit 0]
+
+2026-10-18T22:35:10.149Z
+$ kind load docker-image troubleshooting-storefront:1.0 --name troubleshooting-lab
+Image: "troubleshooting-storefront:1.0" with ID "sha256:6caad80a8fd095bd45ce9a653a67fe534f57dad5ab185aed43fa70ffe6752eaa" not yet present on node "troubleshooting-lab-control-plane", loading...
+[exit 0]
+
+2026-10-18T22:35:15.469Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab apply -f k8s/00-namespace.yaml
+namespace/troubleshooting-lab unchanged
+[exit 0]
+
+2026-10-18T22:35:15.714Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab apply -f k8s/
+namespace/troubleshooting-lab unchanged
+configmap/storefront-config unchanged
+deployment.apps/catalog unchanged
+service/catalog unchanged
+deployment.apps/storefront unchanged
+service/storefront unchanged
+[exit 0]
+
+2026-10-18T22:35:16.205Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab rollout restart deployment/catalog
+deployment.apps/catalog restarted
+[exit 0]
+
+2026-10-18T22:35:16.333Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab rollout status deployment/catalog --timeout=90s
+Waiting for deployment "catalog" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "catalog" rollout to finish: 1 old replicas are pending termination...
+deployment "catalog" successfully rolled out
+[exit 0]
+
+2026-10-18T22:35:18.167Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab rollout restart deployment/storefront
+deployment.apps/storefront restarted
+[exit 0]
+
+2026-10-18T22:35:18.325Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab rollout status deployment/storefront --timeout=90s
+Waiting for deployment "storefront" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "storefront" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "storefront" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "storefront" rollout to finish: 0 of 1 updated replicas are available...
+deployment "storefront" successfully rolled out
+[exit 0]
+
+2026-10-18T22:35:21.648Z
+$ docker compose ps
+NAME                               IMAGE                            COMMAND                  SERVICE      CREATED          STATUS                    PORTS
+troubleshooting-lab-catalog-1      troubleshooting-storefront:1.0   "docker-entrypoint.s…"   catalog      23 seconds ago   Up 21 seconds (healthy)   8080-8081/tcp
+troubleshooting-lab-storefront-1   troubleshooting-storefront:1.0   "docker-entrypoint.s…"   storefront   22 seconds ago   Up 17 seconds (healthy)   127.0.0.1:8080->8080/tcp, 8081/tcp
+[exit 0]
+
+2026-10-18T22:35:21.919Z
+$ docker compose exec -T storefront node app/probe.mjs http://127.0.0.1:8080/api/catalog 200 lab-baseline
+HTTP 200
+{
+  "status": "ok",
+  "products": [
+    {
+      "id": "mug",
+      "name": "Trail mug",
+      "price": 18
+    },
+    {
+      "id": "notebook",
+      "name": "Field notebook",
+      "price": 12
+    },
+    {
+      "id": "tote",
+      "name": "Canvas tote",
+      "price": 24
+    }
+  ],
+  "requestId": "lab-baseline"
+}
+[exit 0]
+
+2026-10-18T22:35:28.742Z
+$ docker compose -f compose.yaml -f scenarios/compose.bad-port.yaml up -d --no-deps --force-recreate storefront
+Container troubleshooting-lab-storefront-1  Recreate
+ Container troubleshooting-lab-storefront-1  Recreated
+ Container troubleshooting-lab-storefront-1  Starting
+ Container troubleshooting-lab-storefront-1  Started
+[exit 0]
+
+2026-10-18T22:35:30.701Z
+$ docker compose exec -T storefront node app/probe.mjs http://127.0.0.1:8080/api/catalog 503 lab-broken
+HTTP 503
+{
+  "status": "unavailable",
+  "error": "catalog_unavailable",
+  "requestId": "lab-broken",
+  "message": "The storefront cannot reach its catalog. Inspect the application logs."
+}
+[exit 0]
+
+2026-10-18T22:35:37.450Z
+$ docker compose logs --no-color --tail=50 storefront
+storefront-1  | {"timestamp":"2026-10-18T22:35:30.699Z","level":"info","service":"storefront","event":"server_started","port":8080,"catalogUrl":"http://catalog:9090"}
+storefront-1  | {"timestamp":"2026-10-18T22:35:31.161Z","level":"error","service":"storefront","event":"dependency_failed","requestId":"209bb23b-0716-4b96-b079-cddb52281509","upstream":"http://catalog:9090","errorCode":"ECONNREFUSED","durationMs":19}
+storefront-1  | {"timestamp":"2026-10-18T22:35:31.164Z","level":"info","service":"storefront","event":"http_request","requestId":"209bb23b-0716-4b96-b079-cddb52281509","method":"GET","path":"/api/catalog","status":503,"durationMs":22}
+storefront-1  | {"timestamp":"2026-10-18T22:35:31.179Z","level":"info","service":"storefront","event":"http_request","requestId":"a08eb8d8-1eb9-4f06-bbbd-2909e1646d38","method":"GET","path":"/","status":200,"durationMs":0}
+storefront-1  | {"timestamp":"2026-10-18T22:35:31.188Z","level":"info","service":"storefront","event":"http_request","requestId":"089036af-ba4a-4442-b14c-6d71fff94584","method":"GET","path":"/styles.css","status":200,"durationMs":1}
+storefront-1  | {"timestamp":"2026-10-18T22:35:31.192Z","level":"info","service":"storefront","event":"http_request","requestId":"17152263-2412-4f36-9bc8-c61fb37ef6e6","method":"GET","path":"/client.js","status":200,"durationMs":2}
+storefront-1  | {"timestamp":"2026-10-18T22:35:31.204Z","level":"error","service":"storefront","event":"dependency_failed","requestId":"7740c882-216b-455d-a32f-8a0b29ff5e5f","upstream":"http://catalog:9090","errorCode":"ECONNREFUSED","durationMs":7}
+storefront-1  | {"timestamp":"2026-10-18T22:35:31.205Z","level":"info","service":"storefront","event":"http_request","requestId":"7740c882-216b-455d-a32f-8a0b29ff5e5f","method":"GET","path":"/api/catalog","status":503,"durationMs":8}
+storefront-1  | {"timestamp":"2026-10-18T22:35:31.646Z","level":"error","service":"storefront","event":"dependency_failed","requestId":"lab-broken","upstream":"http://catalog:9090","errorCode":"ECONNREFUSED","durationMs":3}
+storefront-1  | {"timestamp":"2026-10-18T22:35:31.646Z","level":"info","service":"storefront","event":"http_request","requestId":"lab-broken","method":"GET","path":"/api/catalog","status":503,"durationMs":3}
+storefront-1  | {"timestamp":"2026-10-18T22:35:31.849Z","level":"info","service":"storefront","event":"http_request","requestId":"cc634434-88d0-49a9-8bf5-facd185ceabf","method":"GET","path":"/","status":200,"durationMs":2}
+storefront-1  | {"timestamp":"2026-10-18T22:35:31.865Z","level":"info","service":"storefront","event":"http_request","requestId":"35a564c6-a7c4-4f80-b301-67b3e9ec5d6c","method":"GET","path":"/styles.css","status":200,"durationMs":1}
+storefront-1  | {"timestamp":"2026-10-18T22:35:31.867Z","level":"info","service":"storefront","event":"http_request","requestId":"86bca23e-72ae-4c3b-b7b7-091e1b914292","method":"GET","path":"/client.js","status":200,"durationMs":1}
+storefront-1  | {"timestamp":"2026-10-18T22:35:31.919Z","level":"error","service":"storefront","event":"dependency_failed","requestId":"67a6a716-5a24-4c69-a804-9afe1d7ebcb0","upstream":"http://catalog:9090","errorCode":"ECONNREFUSED","durationMs":4}
+storefront-1  | {"timestamp":"2026-10-18T22:35:31.920Z","level":"info","service":"storefront","event":"http_request","requestId":"67a6a716-5a24-4c69-a804-9afe1d7ebcb0","method":"GET","path":"/api/catalog","status":503,"durationMs":5}
+storefront-1  | {"timestamp":"2026-10-18T22:35:34.182Z","level":"error","service":"storefront","event":"dependency_failed","requestId":"8a217a1a-ff5a-4bc6-be90-8fb87daf2617","upstream":"http://catalog:9090","errorCode":"ECONNREFUSED","durationMs":2}
+[exit 0]
+
+2026-10-18T22:35:37.739Z
+$ docker compose exec -T storefront printenv CATALOG_URL
+http://catalog:9090
+[exit 0]
+
+2026-10-18T22:35:38.110Z
+$ docker compose exec -T storefront node app/probe.mjs http://catalog:8081/items 200
+HTTP 200
+{
+  "products": [
+    {
+      "id": "mug",
+      "name": "Trail mug",
+      "price": 18
+    },
+    {
+      "id": "notebook",
+      "name": "Field notebook",
+      "price": 12
+    },
+    {
+      "id": "tote",
+      "name": "Canvas tote",
+      "price": 24
+    }
+  ]
+}
+[exit 0]
+
+2026-10-18T22:35:49.960Z
+$ docker compose ps
+NAME                               IMAGE                            COMMAND                  SERVICE      CREATED          STATUS                      PORTS
+troubleshooting-lab-catalog-1      troubleshooting-storefront:1.0   "docker-entrypoint.s…"   catalog      52 seconds ago   Up 50 seconds (healthy)     8080-8081/tcp
+troubleshooting-lab-storefront-1   troubleshooting-storefront:1.0   "docker-entrypoint.s…"   storefront   21 seconds ago   Up 20 seconds (unhealthy)   127.0.0.1:8080->8080/tcp, 8081/tcp
+[exit 0]
+
+2026-10-18T22:35:57.316Z
+$ docker compose -f compose.yaml up -d --no-deps --force-recreate --wait --wait-timeout 60 storefront
+Container troubleshooting-lab-storefront-1  Recreate
+ Container troubleshooting-lab-storefront-1  Recreated
+ Container troubleshooting-lab-storefront-1  Starting
+ Container troubleshooting-lab-storefront-1  Started
+ Container troubleshooting-lab-storefront-1  Waiting
+ Container troubleshooting-lab-storefront-1  Healthy
+[exit 0]
+
+2026-10-18T22:36:04.661Z
+$ docker compose exec -T storefront node app/probe.mjs http://127.0.0.1:8080/readyz 200
+HTTP 200
+{
+  "status": "ready",
+  "service": "storefront"
+}
+[exit 0]
+
+2026-10-18T22:36:05.339Z
+$ docker compose exec -T storefront node app/probe.mjs http://127.0.0.1:8080/api/catalog 200 lab-fixed-1
+HTTP 200
+{
+  "status": "ok",
+  "products": [
+    {
+      "id": "mug",
+      "name": "Trail mug",
+      "price": 18
+    },
+    {
+      "id": "notebook",
+      "name": "Field notebook",
+      "price": 12
+    },
+    {
+      "id": "tote",
+      "name": "Canvas tote",
+      "price": 24
+    }
+  ],
+  "requestId": "lab-fixed-1"
+}
+[exit 0]
+
+2026-10-18T22:36:06.034Z
+$ docker compose exec -T storefront node app/probe.mjs http://127.0.0.1:8080/api/catalog 200 lab-fixed-2
+HTTP 200
+{
+  "status": "ok",
+  "products": [
+    {
+      "id": "mug",
+      "name": "Trail mug",
+      "price": 18
+    },
+    {
+      "id": "notebook",
+      "name": "Field notebook",
+      "price": 12
+    },
+    {
+      "id": "tote",
+      "name": "Canvas tote",
+      "price": 24
+    }
+  ],
+  "requestId": "lab-fixed-2"
+}
+[exit 0]
+
+2026-10-18T22:36:06.515Z
+$ docker compose exec -T storefront node app/probe.mjs http://127.0.0.1:8080/api/catalog 200 lab-fixed-3
+HTTP 200
+{
+  "status": "ok",
+  "products": [
+    {
+      "id": "mug",
+      "name": "Trail mug",
+      "price": 18
+    },
+    {
+      "id": "notebook",
+      "name": "Field notebook",
+      "price": 12
+    },
+    {
+      "id": "tote",
+      "name": "Canvas tote",
+      "price": 24
+    }
+  ],
+  "requestId": "lab-fixed-3"
+}
+[exit 0]
+
+2026-10-18T22:36:10.979Z
+$ docker compose logs --no-color --tail=20 storefront
+storefront-1  | {"timestamp":"2026-10-18T22:35:59.773Z","level":"info","service":"storefront","event":"server_started","port":8080,"catalogUrl":"http://catalog:8081"}
+storefront-1  | {"timestamp":"2026-10-18T22:36:03.912Z","level":"info","service":"storefront","event":"http_request","requestId":"3d766e7a-6eee-4b57-a184-92ceaead3ae4","method":"GET","path":"/","status":200,"durationMs":1}
+storefront-1  | {"timestamp":"2026-10-18T22:36:03.925Z","level":"info","service":"storefront","event":"http_request","requestId":"de75196b-2c85-4167-b6ef-fb4d8048cddc","method":"GET","path":"/styles.css","status":200,"durationMs":0}
+storefront-1  | {"timestamp":"2026-10-18T22:36:03.927Z","level":"info","service":"storefront","event":"http_request","requestId":"ea5500cf-ca55-4532-8849-d6a7419f013c","method":"GET","path":"/client.js","status":200,"durationMs":1}
+storefront-1  | {"timestamp":"2026-10-18T22:36:03.939Z","level":"info","service":"storefront","event":"http_request","requestId":"c70bea81-bacb-453a-8e4d-3154805ba5c7","method":"GET","path":"/api/catalog","status":200,"durationMs":6}
+storefront-1  | {"timestamp":"2026-10-18T22:36:05.368Z","level":"info","service":"storefront","event":"http_request","requestId":"lab-fixed-1","method":"GET","path":"/api/catalog","status":200,"durationMs":3}
+storefront-1  | {"timestamp":"2026-10-18T22:36:05.882Z","level":"info","service":"storefront","event":"http_request","requestId":"lab-fixed-2","method":"GET","path":"/api/catalog","status":200,"durationMs":3}
+storefront-1  | {"timestamp":"2026-10-18T22:36:06.358Z","level":"info","service":"storefront","event":"http_request","requestId":"lab-fixed-3","method":"GET","path":"/api/catalog","status":200,"durationMs":3}
+[exit 0]
+
+2026-10-18T22:36:18.785Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab get pods
+NAME                          READY   STATUS    RESTARTS   AGE
+catalog-6d88c9bb54-fj9xt      1/1     Running   0          63s
+storefront-696bb76c54-qc4b4   1/1     Running   0          61s
+[exit 0]
+
+2026-10-18T22:36:18.979Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab exec deployment/catalog -- node app/probe.mjs http://storefront:8080/api/catalog 200 k8s-baseline
+HTTP 200
+{
+  "status": "ok",
+  "products": [
+    {
+      "id": "mug",
+      "name": "Trail mug",
+      "price": 18
+    },
+    {
+      "id": "notebook",
+      "name": "Field notebook",
+      "price": 12
+    },
+    {
+      "id": "tote",
+      "name": "Canvas tote",
+      "price": 24
+    }
+  ],
+  "requestId": "k8s-baseline"
+}
+[exit 0]
+
+2026-10-18T22:36:26.005Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab apply -f scenarios/k8s.bad-port.yaml
+configmap/storefront-config configured
+[exit 0]
+
+2026-10-18T22:36:26.324Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab rollout restart deployment/storefront
+deployment.apps/storefront restarted
+[exit 0]
+
+2026-10-18T22:36:26.558Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab rollout status deployment/storefront --timeout=15s
+Waiting for deployment "storefront" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "storefront" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "storefront" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "storefront" rollout to finish: 0 of 1 updated replicas are available...
+error: timed out waiting for the condition
+[exit 1]
+
+2026-10-18T22:36:41.774Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab get pods
+NAME                          READY   STATUS    RESTARTS   AGE
+catalog-6d88c9bb54-fj9xt      1/1     Running   0          85s
+storefront-74c57f9764-xmdl7   0/1     Running   0          13s
+[exit 0]
+
+2026-10-18T22:36:41.936Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab exec deployment/storefront -- printenv CATALOG_URL
+http://catalog:9090
+[exit 0]
+
+2026-10-18T22:36:42.184Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab exec deployment/storefront -- node app/probe.mjs http://127.0.0.1:8080/api/catalog 503 k8s-broken
+HTTP 503
+{
+  "status": "unavailable",
+  "error": "catalog_unavailable",
+  "requestId": "k8s-broken",
+  "message": "The storefront cannot reach its catalog. Inspect the application logs."
+}
+[exit 0]
+
+2026-10-18T22:36:44.146Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab logs deployment/storefront --tail=30
+{"timestamp":"2026-10-18T22:36:28.722Z","level":"info","service":"storefront","event":"server_started","port":8080,"catalogUrl":"http://catalog:9090"}
+{"timestamp":"2026-10-18T22:36:29.710Z","level":"error","service":"storefront","event":"dependency_failed","requestId":"8f7be660-38e3-4aa2-95f7-0f80ad5afa0d","upstream":"http://catalog:9090","errorCode":"TimeoutError","durationMs":1203}
+{"timestamp":"2026-10-18T22:36:32.705Z","level":"error","service":"storefront","event":"dependency_failed","requestId":"9acdc4a9-f3ef-4319-a2f2-90667575909a","upstream":"http://catalog:9090","errorCode":"TimeoutError","durationMs":1201}
+{"timestamp":"2026-10-18T22:36:35.705Z","level":"error","service":"storefront","event":"dependency_failed","requestId":"6d670b40-ac8b-4fe9-8d99-d3fbf9eac8e2","upstream":"http://catalog:9090","errorCode":"TimeoutError","durationMs":1201}
+{"timestamp":"2026-10-18T22:36:38.705Z","level":"error","service":"storefront","event":"dependency_failed","requestId":"cb1e58b0-d31f-433c-b956-04397c1ac232","upstream":"http://catalog:9090","errorCode":"TimeoutError","durationMs":1202}
+{"timestamp":"2026-10-18T22:36:41.705Z","level":"error","service":"storefront","event":"dependency_failed","requestId":"88d2bf47-4bf7-4361-885f-6d55a6a30e92","upstream":"http://catalog:9090","errorCode":"TimeoutError","durationMs":1201}
+{"timestamp":"2026-10-18T22:36:44.038Z","level":"error","service":"storefront","event":"dependency_failed","requestId":"k8s-broken","upstream":"http://catalog:9090","errorCode":"TimeoutError","durationMs":1201}
+{"timestamp":"2026-10-18T22:36:44.039Z","level":"info","service":"storefront","event":"http_request","requestId":"k8s-broken","method":"GET","path":"/api/catalog","status":503,"durationMs":1202}
+[exit 0]
+
+2026-10-18T22:36:44.354Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab describe pods -l app=storefront
+Name:             storefront-74c57f9764-xmdl7
+Namespace:        troubleshooting-lab
+Priority:         0
+Service Account:  default
+Node:             troubleshooting-lab-control-plane/172.25.0.2
+Start Time:       Mon, 19 Oct 2026 00:36:28 +0200
+Labels:           app=storefront
+                  pod-template-hash=74c57f9764
+Annotations:      kubectl.kubernetes.io/restartedAt: 2026-10-19T00:36:26+02:00
+Status:           Running
+SeccompProfile:   RuntimeDefault
+IP:               10.244.0.15
+IPs:
+  IP:           10.244.0.15
+Controlled By:  ReplicaSet/storefront-74c57f9764
+Containers:
+  storefront:
+    Container ID:   containerd://982a565a2cef0ea182bb21956e9f7326c3591214c70d6b5e162c7fe4f0498946
+    Image:          troubleshooting-storefront:1.0
+    Image ID:       sha256:baebe0547b3e533ef581d5a74d3f6f2829e981c581df6be5e3349dc6ba8fb9ce
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Mon, 19 Oct 2026 00:36:28 +0200
+    Ready:          False
+    Restart Count:  0
+    Limits:
+      cpu:     250m
+      memory:  96Mi
+    Requests:
+      cpu:      50m
+      memory:   32Mi
+    Liveness:   http-get http://:http/livez delay=5s timeout=1s period=5s #success=1 #failure=3
+    Readiness:  http-get http://:http/readyz delay=0s timeout=2s period=3s #success=1 #failure=2
+    Environment:
+      APP_ROLE:     storefront
+      PORT:         8080
+      CATALOG_URL:  <set to the key 'CATALOG_URL' of config map 'storefront-config'>  Optional: false
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-92l7v (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-92l7v:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age               From               Message
+  ----     ------     ----              ----               -------
+  Normal   Scheduled  16s               default-scheduler  Successfully assigned troubleshooting-lab/storefront-74c57f9764-xmdl7 to troubleshooting-lab-control-plane
+  Normal   Pulled     16s               kubelet            Container image "troubleshooting-storefront:1.0" already present on machine
+  Normal   Created    16s               kubelet            Created container: storefront
+  Normal   Started    16s               kubelet            Started container storefront
+  Warning  Unhealthy  16s               kubelet            Readiness probe failed: Get "http://10.244.0.15:8080/readyz": dial tcp 10.244.0.15:8080: connect: connection refused
+  Warning  Unhealthy  3s (x5 over 15s)  kubelet            Readiness probe failed: HTTP probe failed with statuscode: 503
+[exit 0]
+
+2026-10-18T22:36:50.915Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab exec deployment/storefront -- node app/probe.mjs http://127.0.0.1:8080/livez 200
+HTTP 200
+{
+  "status": "alive",
+  "service": "storefront"
+}
+[exit 0]
+
+2026-10-18T22:36:51.961Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab exec deployment/storefront -- node app/probe.mjs http://127.0.0.1:8080/readyz 503
+HTTP 503
+{
+  "status": "unavailable",
+  "error": "catalog_unavailable",
+  "requestId": "34868037-5563-4538-baec-ce63cb242734",
+  "message": "The storefront cannot reach its catalog. Inspect the application logs."
+}
+[exit 0]
+
+2026-10-18T22:36:53.977Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab exec deployment/storefront -- node app/probe.mjs http://catalog:8081/items 200
+HTTP 200
+{
+  "products": [
+    {
+      "id": "mug",
+      "name": "Trail mug",
+      "price": 18
+    },
+    {
+      "id": "notebook",
+      "name": "Field notebook",
+      "price": 12
+    },
+    {
+      "id": "tote",
+      "name": "Canvas tote",
+      "price": 24
+    }
+  ]
+}
+[exit 0]
+
+2026-10-18T22:36:55.033Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab get endpointslices -l kubernetes.io/service-name=storefront -o jsonpath={.items[0].endpoints[0].conditions.ready}
+false
+[exit 0]
+
+2026-10-18T22:37:02.228Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab apply -f k8s/01-configmap.yaml
+configmap/storefront-config configured
+[exit 0]
+
+2026-10-18T22:37:02.532Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab rollout restart deployment/storefront
+deployment.apps/storefront restarted
+[exit 0]
+
+2026-10-18T22:37:02.769Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab rollout status deployment/storefront --timeout=90s
+Waiting for deployment "storefront" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "storefront" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "storefront" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "storefront" rollout to finish: 0 of 1 updated replicas are available...
+deployment "storefront" successfully rolled out
+[exit 0]
+
+2026-10-18T22:37:06.605Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab get pods
+NAME                          READY   STATUS    RESTARTS   AGE
+catalog-6d88c9bb54-fj9xt      1/1     Running   0          110s
+storefront-7b88bc797f-r7dbq   1/1     Running   0          2s
+[exit 0]
+
+2026-10-18T22:37:06.766Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab exec deployment/storefront -- node app/probe.mjs http://127.0.0.1:8080/readyz 200
+HTTP 200
+{
+  "status": "ready",
+  "service": "storefront"
+}
+[exit 0]
+
+2026-10-18T22:37:07.658Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab exec deployment/catalog -- node app/probe.mjs http://storefront:8080/api/catalog 200 k8s-fixed-1
+HTTP 200
+{
+  "status": "ok",
+  "products": [
+    {
+      "id": "mug",
+      "name": "Trail mug",
+      "price": 18
+    },
+    {
+      "id": "notebook",
+      "name": "Field notebook",
+      "price": 12
+    },
+    {
+      "id": "tote",
+      "name": "Canvas tote",
+      "price": 24
+    }
+  ],
+  "requestId": "k8s-fixed-1"
+}
+[exit 0]
+
+2026-10-18T22:37:08.606Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab exec deployment/catalog -- node app/probe.mjs http://storefront:8080/api/catalog 200 k8s-fixed-2
+HTTP 200
+{
+  "status": "ok",
+  "products": [
+    {
+      "id": "mug",
+      "name": "Trail mug",
+      "price": 18
+    },
+    {
+      "id": "notebook",
+      "name": "Field notebook",
+      "price": 12
+    },
+    {
+      "id": "tote",
+      "name": "Canvas tote",
+      "price": 24
+    }
+  ],
+  "requestId": "k8s-fixed-2"
+}
+[exit 0]
+
+2026-10-18T22:37:09.538Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab exec deployment/catalog -- node app/probe.mjs http://storefront:8080/api/catalog 200 k8s-fixed-3
+HTTP 200
+{
+  "status": "ok",
+  "products": [
+    {
+      "id": "mug",
+      "name": "Trail mug",
+      "price": 18
+    },
+    {
+      "id": "notebook",
+      "name": "Field notebook",
+      "price": 12
+    },
+    {
+      "id": "tote",
+      "name": "Canvas tote",
+      "price": 24
+    }
+  ],
+  "requestId": "k8s-fixed-3"
+}
+[exit 0]
+
+2026-10-18T22:37:10.703Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab get pods
+NAME                          READY   STATUS    RESTARTS   AGE
+catalog-6d88c9bb54-fj9xt      1/1     Running   0          114s
+storefront-7b88bc797f-r7dbq   1/1     Running   0          6s
+[exit 0]
+
+2026-10-18T22:37:10.915Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab exec deployment/catalog -- node app/probe.mjs http://storefront:8080/api/catalog 200 k8s-fixed-final
+HTTP 200
+{
+  "status": "ok",
+  "products": [
+    {
+      "id": "mug",
+      "name": "Trail mug",
+      "price": 18
+    },
+    {
+      "id": "notebook",
+      "name": "Field notebook",
+      "price": 12
+    },
+    {
+      "id": "tote",
+      "name": "Canvas tote",
+      "price": 24
+    }
+  ],
+  "requestId": "k8s-fixed-final"
+}
+[exit 0]
+
+2026-10-18T22:37:11.857Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab get endpointslices -l kubernetes.io/service-name=storefront -o jsonpath={.items[0].endpoints[0].conditions.ready}
+true
+[exit 0]
+
+2026-10-18T22:37:17.396Z
+$ kubectl --kubeconfig artifacts/kubeconfig --context kind-troubleshooting-lab -n troubleshooting-lab logs deployment/storefront --tail=20
+{"timestamp":"2026-10-18T22:37:05.442Z","level":"info","service":"storefront","event":"server_started","port":8080,"catalogUrl":"http://catalog:8081"}
+{"timestamp":"2026-10-18T22:37:08.174Z","level":"info","service":"storefront","event":"http_request","requestId":"k8s-fixed-1","method":"GET","path":"/api/catalog","status":200,"durationMs":4}
+{"timestamp":"2026-10-18T22:37:09.165Z","level":"info","service":"storefront","event":"http_request","requestId":"k8s-fixed-2","method":"GET","path":"/api/catalog","status":200,"durationMs":3}
+{"timestamp":"2026-10-18T22:37:10.364Z","level":"info","service":"storefront","event":"http_request","requestId":"k8s-fixed-3","method":"GET","path":"/api/catalog","status":200,"durationMs":4}
+{"timestamp":"2026-10-18T22:37:11.615Z","level":"info","service":"storefront","event":"http_request","requestId":"k8s-fixed-final","method":"GET","path":"/api/catalog","status":200,"durationMs":3}
+[exit 0]

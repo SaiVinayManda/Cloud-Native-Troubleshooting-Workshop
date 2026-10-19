@@ -1,0 +1,5 @@
+# Merge this with compose.yaml to inject the incident.
+services:
+  storefront:
+    environment:
+      CATALOG_URL: http://catalog:9090

@@ -1,0 +1,28 @@
+name: troubleshooting-lab
+services:
+  catalog:
+    build: .
+    image: troubleshooting-storefront:1.0
+    environment:
+      APP_ROLE: catalog
+      PORT: "8081"
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  storefront:
+    build: .
+    image: troubleshooting-storefront:1.0
+    environment:
+      APP_ROLE: storefront
+      PORT: "8080"
+      CATALOG_URL: http://catalog:8081
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      catalog:
+        condition: service_healthy
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]

@@ -1,0 +1,36 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:07.051
+01 / Establish a healthy baseline
+Two healthy containers and a real customer request returning HTTP 200.
+
+2
+00:00:07.051 --> 00:00:15.769
+02 / Introduce the bad port
+The override changes CATALOG_URL to catalog:9090. The HTML page still loads; the customer request fails.
+
+3
+00:00:15.769 --> 00:00:35.681
+03 / Diagnose from evidence
+ECONNREFUSED points to catalog:9090. The same container can reach catalog:8081: the configured port is wrong.
+
+4
+00:00:35.681 --> 00:00:57.097
+04 / Repair and verify Docker
+Recreate with the known-good configuration. Check readiness, three customer requests, and their fresh logs.
+
+5
+00:00:57.097 --> 00:01:04.334
+05 / Establish the Kubernetes baseline
+The image is loaded into kind. Both Pods are ready; a request through the storefront Service succeeds.
+
+6
+00:01:04.334 --> 00:01:40.526
+06 / Diagnose the unready Pod
+The bad ConfigMap takes effect after replacement. Running with 0/1 ready and zero restarts is a readiness failure.
+
+7
+00:01:40.526 --> 00:02:09.560
+07 / Repair and verify Kubernetes
+Restore the ConfigMap and replace the Pod. Readiness, Service traffic, and fresh request logs now agree.
