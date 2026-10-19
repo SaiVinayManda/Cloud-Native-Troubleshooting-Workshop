@@ -47,7 +47,19 @@ node scripts/capture-walkthrough.mjs
 
 For another installed browser, set `BROWSER_CHANNEL=msedge`. Set `LAB_KUBECONFIG` to use an explicit kubeconfig file and `KIND_BIN` if kind is outside PATH. If present, the script automatically uses workspace-local `artifacts/kubeconfig` and `.tools/kind.exe`. Neither is committed. It does not create a cluster or change the active kubectl context.
 
-The capture writes the screenshots, WebM, VTT captions, and full evidence into `media/`. Temporary encoder video files remain under ignored `artifacts/`. After capture, synchronize the external caption track to the recorded title transitions and check playback:
+The capture writes the screenshots, WebM, VTT captions, and full evidence into `media/`. The delivered 129.56 second video is VP9 encoded at its original 1600 × 1000 resolution and is about 3.56 MB, down from the 17.72 MB source. Temporary encoder files remain under ignored `artifacts/`.
+
+To compress a fresh recording on Windows after `npx playwright install ffmpeg`, back up the source and encode it with the same settings:
+
+```powershell
+Copy-Item -LiteralPath media/walkthrough.webm -Destination artifacts/video/walkthrough-original.webm -Force
+$encoder = Get-ChildItem -Path .cache/ms-playwright/ffmpeg-* -Filter ffmpeg-win64.exe | Select-Object -First 1 -ExpandProperty FullName
+& $encoder -hide_banner -y -i media/walkthrough.webm -c:v libvpx-vp9 -crf 34 -b:v 0 -deadline good -cpu-used 4 -row-mt 1 -tune-content screen -an -map_metadata 0 artifacts/video/walkthrough-compressed.webm
+if ($LASTEXITCODE -ne 0) { throw 'Video compression failed' }
+Copy-Item -LiteralPath artifacts/video/walkthrough-compressed.webm -Destination media/walkthrough.webm -Force
+```
+
+Then synchronize the external caption track to the recording and check playback:
 
 ```sh
 node scripts/verify-media.mjs --sync-captions

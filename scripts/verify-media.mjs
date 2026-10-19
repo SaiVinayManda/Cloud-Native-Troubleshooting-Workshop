@@ -8,11 +8,13 @@ import { chromium } from 'playwright';
 
 // Serve only media/ on loopback; supports byte ranges for video seeking.
 const root = resolve('media');
+const videoPath = resolve(process.env.VERIFY_VIDEO || resolve(root, 'walkthrough.webm'));
 const types = { '.html': 'text/html', '.webm': 'video/webm', '.vtt': 'text/vtt', '.png': 'image/png' };
 const server = http.createServer(async (request, response) => {
   try {
-    const path = resolve(root, `.${decodeURIComponent(new URL(request.url, 'http://localhost').pathname)}`);
-    if (!path.startsWith(root + sep)) { response.writeHead(403).end(); return; }
+    const requestedPath = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
+    const path = requestedPath === '/walkthrough.webm' ? videoPath : resolve(root, `.${requestedPath}`);
+    if (requestedPath !== '/walkthrough.webm' && !path.startsWith(root + sep)) { response.writeHead(403).end(); return; }
     const file = await stat(path);
     const range = request.headers.range?.match(/^bytes=(\d+)-(\d*)$/);
     const start = range ? Number(range[1]) : 0;
